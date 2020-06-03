@@ -35,7 +35,7 @@ end
 
 mutable struct Gtk_signal_motion{T}
     closure::T
-    callback::Ptr{Nothing}
+    callback::Base.CFunction
     include::UInt32
     exclude::UInt32
 end
@@ -43,11 +43,7 @@ function notify_motion(p::Ptr{GObject}, eventp::Ptr{GdkEventMotion}, closure::Gt
     event = unsafe_load(eventp)
     if event.state & closure.include == closure.include &&
        event.state & closure.exclude == 0
-        if isbitstype(T)
-            ret = ccall(closure.callback, Cint, (Ptr{GObject}, Ptr{GdkEventMotion}, T), p, eventp, closure.closure)
-        else
-            ret = ccall(closure.callback, Cint, (Ptr{GObject}, Ptr{GdkEventMotion}, Any), p, eventp, closure.closure)
-        end
+        ret = closure.callback.f(p, eventp, closure.closure)
     else
         ret = Int32(false)
     end
